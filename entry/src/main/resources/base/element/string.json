@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "环境白噪音专注 APP"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "入口能力，负责加载环境白噪音首页"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "白噪音"
+    },
+    {
+      "name": "app_title",
+      "value": "夜雨森林海"
+    }
+  ]
+}

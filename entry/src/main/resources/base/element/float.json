@@ -1,0 +1,20 @@
+{
+  "float": [
+    {
+      "name": "page_text_font_size",
+      "value": "36fp"
+    },
+    {
+      "name": "surface_margin",
+      "value": "16fp"
+    },
+    {
+      "name": "surface_padding",
+      "value": "20fp"
+    },
+    {
+      "name": "surface_round",
+      "value": "30fp"
+    }
+  ]
+}

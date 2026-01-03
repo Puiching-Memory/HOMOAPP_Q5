@@ -1,0 +1,28 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#040A1E"
+    },
+    {
+      "name": "primary_accent",
+      "value": "#5CD6FF"
+    },
+    {
+      "name": "surface_card",
+      "value": "#0F1E3C"
+    },
+    {
+      "name": "surface_card_border",
+      "value": "#27518B"
+    },
+    {
+      "name": "text_primary",
+      "value": "#F5F7FF"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#A2B9D8"
+    }
+  ]
+}
