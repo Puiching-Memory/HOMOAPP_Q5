@@ -26,36 +26,8 @@ func Seed(db *gorm.DB) error {
             Tracks: []model.Track{
                 {
                     Name:          "细雨",
-                    AudioURL:      "https://cdn.pixabay.com/download/audio/2023/01/23/audio_f7bb2c9a08.mp3?filename=calm-rain-7901.mp3",
+                    AudioURL:      "/data/小区%20小雨%20白噪音%20下雨天%20城市%20高楼_爱给网_aigei_com.mp3",
                     DefaultVolume: 0.75,
-                },
-                {
-                    Name:          "雷鸣",
-                    AudioURL:      "https://cdn.pixabay.com/download/audio/2023/02/11/audio_576d5d8d10.mp3?filename=thunderstorm-13546.mp3",
-                    DefaultVolume: 0.35,
-                },
-                {
-                    Name:          "轻风",
-                    AudioURL:      "https://cdn.pixabay.com/download/audio/2023/03/10/audio_7b2eec2a6d.mp3?filename=gentle-wind-16163.mp3",
-                    DefaultVolume: 0.45,
-                },
-            },
-        },
-        {
-            Name:        "森林清晨",
-            Description: "露珠在叶尖摇曳，鸟鸣与水滴交织成透明旋律。",
-            CoverURL:    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=60",
-            Atmosphere:  "Forest Calm",
-            Tracks: []model.Track{
-                {
-                    Name:          "林间细雨",
-                    AudioURL:      "https://cdn.pixabay.com/download/audio/2021/12/18/audio_7bf4da677a.mp3?filename=small-rain-114945.mp3",
-                    DefaultVolume: 0.7,
-                },
-                {
-                    Name:          "鸟群",
-                    AudioURL:      "https://cdn.pixabay.com/download/audio/2021/10/12/audio_7c5f28591f.mp3?filename=birdsong-13803.mp3",
-                    DefaultVolume: 0.55,
                 },
             },
         },
@@ -67,13 +39,8 @@ func Seed(db *gorm.DB) error {
             Tracks: []model.Track{
                 {
                     Name:          "远洋海浪",
-                    AudioURL:      "https://cdn.pixabay.com/download/audio/2021/08/04/audio_8cb6ef2bc0.mp3?filename=calm-sea-9931.mp3",
+                    AudioURL:      "/data/海浪%20沙滩%20海水冲刷细沙的沙沙声%20自然白噪音%20海边环境音%20风_爱给网_aigei_com.mp3",
                     DefaultVolume: 0.9,
-                },
-                {
-                    Name:          "晚风",
-                    AudioURL:      "https://cdn.pixabay.com/download/audio/2023/08/10/audio_1c4db7a40f.mp3?filename=evening-breeze-13532.mp3",
-                    DefaultVolume: 0.5,
                 },
             },
         },
@@ -99,24 +66,13 @@ func Seed(db *gorm.DB) error {
             SceneID: scenes[0].ID,
             PresetTracks: []model.PresetTrack{
                 {TrackID: trackIndex["雨夜静听::细雨"], Volume: 0.9},
-                {TrackID: trackIndex["雨夜静听::雷鸣"], Volume: 0.25},
-                {TrackID: trackIndex["雨夜静听::轻风"], Volume: 0.45},
-            },
-        },
-        {
-            Name:    "沉静森林",
-            SceneID: scenes[1].ID,
-            PresetTracks: []model.PresetTrack{
-                {TrackID: trackIndex["森林清晨::林间细雨"], Volume: 0.85},
-                {TrackID: trackIndex["森林清晨::鸟群"], Volume: 0.6},
             },
         },
         {
             Name:    "睡眠模式",
-            SceneID: scenes[2].ID,
+            SceneID: scenes[1].ID,
             PresetTracks: []model.PresetTrack{
                 {TrackID: trackIndex["海浪低语::远洋海浪"], Volume: 1.0},
-                {TrackID: trackIndex["海浪低语::晚风"], Volume: 0.6},
             },
         },
     }
