@@ -1,25 +1,25 @@
-# Builder stage compiles the Go binary for production use.
-FROM golang:1.22-alpine AS builder
+FROM python:3.11-slim
 
-# Install build dependencies for CGO and SQLite
-RUN apk add --no-cache git gcc musl-dev
-
-WORKDIR /workspace
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=1 GOOS=linux go build -o /workspace/bin/noise-backend ./cmd/server
-
-# Production stage packages only the binary and seeded database.
-FROM alpine:3.19
-RUN apk add --no-cache ca-certificates
-RUN adduser -D -H -u 1000 noise
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    NOISE_BACKEND_PORT=8080 \
+    NOISE_DATA_DIR=/app/data \
+    NOISE_DB_PATH=/app/data/white_noise.db
 
 WORKDIR /app
-COPY --from=builder /workspace/bin/noise-backend ./noise-backend
-COPY --from=builder /workspace/data ./data
-RUN chown -R noise:noise ./data
-USER noise
 
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY app/ ./app/
+COPY data/ ./data/
+
+# Expose port
 EXPOSE 8080
-ENTRYPOINT ["/app/noise-backend"]
+
+# Run the application
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

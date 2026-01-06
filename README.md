@@ -3,7 +3,7 @@ HarmonyOS 环境白噪音 APP，整合 ArkTS 前端与 Docker 化后端，实现
 
 ## 项目概述
 - 前端：`entry` 模块加载 [entry/src/main/ets/pages/Index.ets](entry/src/main/ets/pages/Index.ets)，展示场景卡片、音轨控制、预设模式与专注计时器。
-- 后端：Go + Gin 提供 `/api/v1/scenes`、`/api/v1/presets` 等接口，数据存储在 SQLite 并打包进镜像。
+- 后端：FastAPI 提供 `/api/v1/scenes`、`/api/v1/presets` 等接口，数据存储在 SQLite 并打包至 Docker 容器。
 - 交互：前端默认请求 `http://10.0.2.2:8080/api/v1`，返回的 `audioUrl` 指向公开白噪音样本，可驱动 ArkUI 播放机制。
 
 ## 快速启动
@@ -13,9 +13,9 @@ HarmonyOS 环境白噪音 APP，整合 ArkTS 前端与 Docker 化后端，实现
 
 ## 架构亮点
 - **前端**：Compound UI 通过 `fetch` 拉取场景/预设，维护选中场景、轨道音量与专注计时状态，支持场景切换与错误提示。
-- **后端**：结构清晰的模型 Layer 搭配自动迁移与数据注入，API 跨域开放，使用 multi-stage Dockerfile 打包后仅带一个静态二进制与 SQLite 数据库。
+- **后端**：使用 FastAPI 异步架构，支持自动模型迁移与数据注入，API 跨域开放，提供极简的 Docker 部署。
 
 ## 目录结构
 - `entry/`：ArkTS 应用，入口在 [entry/src/main/ets/pages/Index.ets](entry/src/main/ets/pages/Index.ets)。
-- `backend/`：Go REST API，含 Dockerfile、SQLite 数据目录与文档。
+- `backend/`：FastAPI REST API，含 Dockerfile、SQLite 数据目录与文档。
 - `plan.md`：项目规划，覆盖需求分析、数据库与 API 设计。

@@ -6,7 +6,7 @@
 - **应用场景**：学习、工作、睡眠时提供环境白噪音，帮助专注与放松。
 - **整体架构**：
   - 前端：HarmonyOS/ArkTS 应用（本项目 `HOMOAPP_Q5`），通过 HTTP 访问后端。
-  - 后端：Go 语言编写的 REST API 服务。
+  - 后端：FastAPI (Python) 编写的异步 REST API 服务。
   - 数据库：SQLite 存储场景、音轨、预设等数据。
   - 部署：后端打包为 Docker 镜像，前端通过配置好的 BASE_URL 调用。
 
@@ -42,9 +42,9 @@
   - 通过 HTTP 调用后端 REST API，获取场景、音轨、预设配置。
   - 使用前端音频播放能力，播放后端返回的音频 URL（本地或远程）。
 
-- **后端（Go + Gin + SQLite）**
-  - Web 框架：`gin-gonic/gin`。
-  - ORM：`gorm` + `sqlite` 驱动。
+- **后端（FastAPI + SQLAlchemy + SQLite）**
+  - Web 框架：`FastAPI`。
+  - ORM：`SQLAlchemy` + `SQLite` 驱动。
   - 对外提供 JSON 格式的 REST 接口，负责数据增删改查。
   - 使用 Docker 镜像部署，暴露 8080 端口对前端服务。
 

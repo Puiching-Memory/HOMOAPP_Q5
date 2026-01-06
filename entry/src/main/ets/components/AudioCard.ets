@@ -1,4 +1,4 @@
-import { AudioItem } from '../model/AudioModel';
+import { AudioItem, PlaybackState } from '../model/AudioModel';
 
 /**
  * 自定义音频卡片组件
@@ -9,7 +9,7 @@ export struct AudioCard {
   // 音频数据
   @Prop item: AudioItem = new AudioItem();
   // 播放状态
-  @Prop isPlaying: boolean = false;
+  @Prop state: PlaybackState = PlaybackState.IDLE;
   // 音量
   @Prop volume: number = 0.5;
 
@@ -26,23 +26,69 @@ export struct AudioCard {
     this.localVolume = this.volume;
   }
 
+  // 获取按钮背景色
+  private getButtonColor(): string {
+    switch (this.state) {
+      case PlaybackState.PLAYING:
+        return '#FF6B6B'; // 红色表示播放中
+      case PlaybackState.LOADING:
+        return '#FFD93D'; // 黄色表示加载中
+      case PlaybackState.PAUSED:
+        return '#4CAF50'; // 绿色表示暂停
+      default:
+        return '#4CAF50'; // 默认绿色
+    }
+  }
+
+  // 获取按钮图标
+  private getButtonIcon(): Resource {
+    switch (this.state) {
+      case PlaybackState.PLAYING:
+        return $r('sys.symbol.pause_fill');
+      case PlaybackState.LOADING:
+        return $r('sys.symbol.arrow_clockwise');
+      default:
+        return $r('sys.symbol.play_fill');
+    }
+  }
+
   build() {
     Column() {
       // 主行：播放按钮和名称
       Row({ space: 12 }) {
         // 播放/暂停按钮
         Button() {
-          SymbolGlyph(this.isPlaying ? $r('sys.symbol.pause_fill') : $r('sys.symbol.play_fill'))
+          SymbolGlyph(this.getButtonIcon())
             .fontSize(22)
             .fontColor([$r('app.color.start_window_background')])
+            // 为加载状态添加选择动画
+            .rotate({ angle: this.state === PlaybackState.LOADING ? 360 : 0 })
+            .animation(this.state === PlaybackState.LOADING ? {
+              duration: 1000,
+              iterations: -1,
+              curve: Curve.Linear
+            } : { duration: 0 })
         }
         .width(44)
         .height(44)
         .type(ButtonType.Circle)
-        .backgroundColor(this.isPlaying ? '#FF6B6B' : '#4CAF50')
-        .onClick(() => this.onPlay())
+        .backgroundColor(this.getButtonColor())
+        .onClick(() => {
+          this.getUIContext()?.animateTo({ duration: 300 }, () => {
+            this.onPlay();
+          });
+        })
         // 添加缩放动画
-        .scale({ x: this.isPlaying ? 1.1 : 1.0, y: this.isPlaying ? 1.1 : 1.0 })
+        .scale({ 
+          x: this.state === PlaybackState.PLAYING ? 1.1 : 1.0, 
+          y: this.state === PlaybackState.PLAYING ? 1.1 : 1.0 
+        })
+        .shadow(this.state === PlaybackState.PLAYING ? {
+          radius: 10,
+          color: '#40FF6B6B',
+          offsetX: 0,
+          offsetY: 4
+        } : { radius: 0 })
         .animation({ duration: 200 })
 
         // 名称和音量指示

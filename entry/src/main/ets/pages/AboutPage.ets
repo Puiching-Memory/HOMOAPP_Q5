@@ -1,3 +1,5 @@
+import promptAction from '@ohos.promptAction';
+
 @Entry
 @Component
 export struct AboutPage {
@@ -32,6 +34,9 @@ export struct AboutPage {
         Text(`版本 ${this.versionName}`)
           .fontSize(14)
           .fontColor($r('app.color.text_secondary'))
+          .onClick(() => {
+            this.getUIContext().getPromptAction().showToast({ message: '当前已是最新版本' });
+          })
       }
       .padding({ top: 40, bottom: 40 })
 

@@ -1,39 +1,53 @@
-# Environment White Noise Backend
+# FastAPI backend for Environment Noise
 
-Go + Gin 服务，为 HarmonyOS 客户端提供音频文件列表和静态文件服务。
+Python implementation of the backend originally written in Go. It exposes the same routes and uses SQLite for data storage.
 
-## 核心能力
-- **音频文件服务**：自动扫描 `data/` 目录，列出所有音频文件
-- **静态文件访问**：通过 `/data/*` 路径提供音频流
-- **Docker**：多阶段构建镜像，默认暴露 8080 端口
+## Requirements
+- Python 3.10+
+- Access to the audio files under `backend/data` (default)
 
-## 本地启动
-```sh
-cd backend
-go mod tidy
-go run ./cmd/server
+## Setup
+1. Open a shell at the repo root: `cd backend`.
+2. Create a virtualenv (optional but recommended):
+   ```bash
+   python -m venv .venv
+   # Windows
+   .venv\Scripts\activate
+   # macOS/Linux
+   source .venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Configuration
+Environment variables (optional overrides):
+- `NOISE_BACKEND_PORT` (default `8080`)
+- `NOISE_DB_PATH` (default `./data/white_noise.db`)
+- `NOISE_DATA_DIR` (default `./data`)
+
+## Run
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8080
 ```
+The API will seed the SQLite database on first start if empty.
 
-或使用 Docker：
-```sh
-docker build -t homo-noise-backend:latest .
-docker run -p 8080:8080 --rm homo-noise-backend:latest
-```
+## Docker Deployment
+1. Build the image:
+   ```bash
+   docker build -t noise-backend .
+   ```
+2. Run the container:
+   ```bash
+   docker run -p 8080:8080 -v ${PWD}/data:/app/data noise-backend
+   ```
+   *Note: Using a volume mount for `/app/data` ensures your database and audio files persist.*
 
-## API 参考
-
-| 路径 | 方法 | 描述 |
-| --- | --- | --- |
-| `/api/v1/audio` | GET | 返回音频文件列表 |
-| `/data/*` | GET | 音频文件流（MP3） |
-
-### `/api/v1/audio` 响应示例
-```json
-[
-  {"id":1,"name":"light_rain","filename":"light_rain.mp3","url":"/data/light_rain.mp3"},
-  {"id":2,"name":"ocean_waves","filename":"ocean_waves.mp3","url":"/data/ocean_waves.mp3"}
-]
-```
-
-## 添加新音频
-将 MP3/WAV/OGG 文件放入 `backend/data/` 目录即可自动加载。
+## API surface (matches Go backend)
+- `GET /data/{filepath}` – serve audio files (mp3/wav/ogg)
+- `GET /api/v1/audio` – list available audio files
+- `GET /api/v1/scenes` – list scenes with metadata
+- `GET /api/v1/scenes/{id}` – scene detail with tracks
+- `GET /api/v1/presets` – list presets with track volumes
+- `POST /api/v1/listening-session` – accept session payload (acknowledges only)

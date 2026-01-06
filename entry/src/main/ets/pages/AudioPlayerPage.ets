@@ -1,7 +1,8 @@
 import http from '@ohos.net.http';
 import { BusinessError } from '@ohos.base';
 import media from '@ohos.multimedia.media';
-import { AudioItem, PlayerState } from '../model/AudioModel';
+import { AudioItem, PlayerState, PlaybackState } from '../model/AudioModel';
+import { AudioCard } from '../components/AudioCard';
 
 @Entry
 @Component
@@ -38,32 +39,41 @@ export struct AudioPlayerPage {
 
   async togglePlay(item: AudioItem): Promise<void> {
     const state = this.players.get(item.id);
-    if (state && state.isPlaying && state.player) {
-      await state.player.pause();
-      state.isPlaying = false;
-      this.sessionStatus = `已暂停: ${item.name}`;
-    } else {
-      if (state && state.player) {
+    try {
+      if (state && state.state === PlaybackState.PLAYING && state.player) {
+        await state.player.pause();
+        state.state = PlaybackState.PAUSED;
+        state.isPlaying = false;
+        this.sessionStatus = `已暂停: ${item.name}`;
+      } else if (state && state.state === PlaybackState.PAUSED && state.player) {
         await state.player.play();
+        state.state = PlaybackState.PLAYING;
         state.isPlaying = true;
-      } else {
+        this.sessionStatus = `正在播放: ${item.name}`;
+      } else if (!state || state.state === PlaybackState.IDLE) {
         await this.createPlayer(item);
+        this.sessionStatus = `正在加载: ${item.name}`;
       }
-      this.sessionStatus = `正在播放: ${item.name}`;
+    } catch (e) {
+      console.error(`[AudioPlayer] Toggle error: ${JSON.stringify(e)}`);
     }
   }
 
-  async stop(item: AudioItem) {
+  async stop(item: AudioItem): Promise<void> {
     const state = this.players.get(item.id);
-    if (state && state.player) {
-      await state.player.stop();
-      await state.player.release();
-      this.players.delete(item.id);
-      this.sessionStatus = `已停止: ${item.name}`;
+    try {
+      if (state && state.player) {
+        await state.player.stop();
+        await state.player.release();
+        this.players.delete(item.id);
+        this.sessionStatus = `已停止: ${item.name}`;
+      }
+    } catch (e) {
+      console.error(`[AudioPlayer] Stop error: ${JSON.stringify(e)}`);
     }
   }
 
-  async stopAll() {
+  async stopAll(): Promise<void> {
     const entries = this.players.entries();
     let result = entries.next();
     while (!result.done) {
@@ -74,7 +84,7 @@ export struct AudioPlayerPage {
           await state.player.release();
         }
       } catch (e) {
-        console.error(`[AudioPlayer] Stop error: ${e}`);
+        console.error(`[AudioPlayer] Stop all error: ${JSON.stringify(e)}`);
       }
       result = entries.next();
     }
@@ -82,7 +92,7 @@ export struct AudioPlayerPage {
     this.sessionStatus = '已停止全部';
   }
 
-  onVolumeChange(item: AudioItem, value: number) {
+  onVolumeChange(item: AudioItem, value: number): void {
     const state = this.players.get(item.id);
     if (state && state.player) {
       state.volume = value;
@@ -95,25 +105,31 @@ export struct AudioPlayerPage {
       const avPlayer = await media.createAVPlayer();
       const url = item.url.startsWith('/') ? `${this.BASE_ASSET_URL}${item.url}` : item.url;
 
+      const playerState = new PlayerState();
+      playerState.player = avPlayer;
+      playerState.state = PlaybackState.LOADING;
+      playerState.isPlaying = false;
+      playerState.volume = 0.5;
+      this.players.set(item.id, playerState);
+
       avPlayer.on('stateChange', (state: media.AVPlayerState): void => {
         if (state === 'prepared') {
           avPlayer.play();
+          playerState.state = PlaybackState.PLAYING;
+          playerState.isPlaying = true;
+          this.sessionStatus = `正在播放: ${item.name}`;
         }
       });
 
       avPlayer.on('error', (err: BusinessError): void => {
         console.error(`[AudioPlayer] ${item.name} error: ${JSON.stringify(err)}`);
+        this.players.delete(item.id);
       });
 
       avPlayer.url = url;
       avPlayer.loop = true;
       avPlayer.setVolume(0.5);
 
-      const newState = new PlayerState();
-      newState.player = avPlayer;
-      newState.isPlaying = true;
-      newState.volume = 0.5;
-      this.players.set(item.id, newState);
     } catch (e) {
       console.error(`[AudioPlayer] Failed: ${JSON.stringify(e)}`);
     }
@@ -173,7 +189,14 @@ export struct AudioPlayerPage {
         Scroll() {
           Column({ space: 12 }) {
             ForEach(this.audioList, (item: AudioItem) => {
-              this.AudioItemCard(item)
+              AudioCard({
+                item: item,
+                state: this.getItemState(item.id),
+                volume: this.getVolume(item.id),
+                onPlay: (): void => { this.togglePlay(item) },
+                onStop: (): void => { this.stop(item) },
+                onVolumeChange: (v: number): void => { this.onVolumeChange(item, v) }
+              })
             }, (item: AudioItem) => `${item.id}`)
           }
           .padding(20)
@@ -186,73 +209,9 @@ export struct AudioPlayerPage {
     .backgroundColor($r('app.color.start_window_background'))
   }
 
-  @Builder
-  AudioItemCard(item: AudioItem): void {
-    Column() {
-      Row() {
-        Button() {
-          SymbolGlyph(this.isPlayingItem(item.id) ? $r('sys.symbol.pause_fill') : $r('sys.symbol.play_fill'))
-            .fontSize(24)
-            .fontColor([$r('app.color.start_window_background')])
-        }
-        .width(48)
-        .height(48)
-        .type(ButtonType.Circle)
-        .backgroundColor(this.isPlayingItem(item.id) ? '#FF6B6B' : '#4CAF50')
-        .onClick(() => { this.togglePlay(item) })
-
-        Column({ space: 8 }) {
-          Text(item.name)
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_primary'))
-            .width('100%')
-            .textAlign(TextAlign.Start)
-
-          Row({ space: 8 }) {
-            SymbolGlyph($r('sys.symbol.speaker_wave_2'))
-              .fontSize(14)
-              .fontColor([$r('app.color.text_secondary')])
-            Slider({ value: this.getVolume(item.id) * 100 })
-              .layoutWeight(1)
-              .onChange((v: number) => {
-                this.onVolumeChange(item, v / 100);
-              })
-          }
-        }
-        .layoutWeight(1)
-        .padding({ left: 12, right: 12 })
-
-        Button('停止')
-          .fontSize(12)
-          .onClick(() => { this.stop(item) })
-      }
-      .width('100%')
-      .padding(16)
-
-      if (this.showVolumePanel === item.id) {
-        Column() {
-          Text(`音量: ${Math.round(this.getVolume(item.id) * 100)}%`)
-            .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ bottom: 8 })
-        }
-        .transition({ type: TransitionType.Insert, opacity: 0, translate: { y: -20 } })
-        .transition({ type: TransitionType.Delete, opacity: 0, translate: { y: -20 } })
-      }
-    }
-    .width('100%')
-    .backgroundColor($r('app.color.surface_card'))
-    .borderRadius(12)
-    .onClick(() => {
-      this.showVolumePanel = this.showVolumePanel === item.id ? -1 : item.id;
-    })
-    .animation({ duration: 300 })
-  }
-
-  isPlayingItem(id: number): boolean {
+  getItemState(id: number): PlaybackState {
     const state = this.players.get(id);
-    return state ? state.isPlaying : false;
+    return state ? state.state : PlaybackState.IDLE;
   }
 
   getVolume(id: number): number {

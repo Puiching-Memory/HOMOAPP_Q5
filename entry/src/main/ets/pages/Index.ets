@@ -1,7 +1,7 @@
 import http from '@ohos.net.http';
 import { BusinessError } from '@ohos.base';
 import media from '@ohos.multimedia.media';
-import { AudioItem, PlayerState } from '../model/AudioModel';
+import { AudioItem, PlayerState, PlaybackState, Scene } from '../model/AudioModel';
 import { AudioCard } from '../components/AudioCard';
 import { StatusCard, QuickActionCard } from '../components/StatusCard';
 import { AboutPage } from './AboutPage';
@@ -12,69 +12,100 @@ import { SettingsPage } from './SettingsPage';
 struct Index {
   @State currentTab: number = 0;
   @State audioList: Array<AudioItem> = [];
+  @State sceneList: Array<Scene> = [];
   @State isLoading: boolean = true;
   @State sessionStatus: string = '选择要播放的音频';
   @State activeAudioId: number = -1;
+  @State timerRemaining: number = 0; // 秒
+  private timerId: number = -1;
+
+  @StorageLink('defaultVolume') defaultVolume: number = 0.5;
+  @StorageLink('loopPlayback') loopPlayback: boolean = true;
 
   private players: Map<number, PlayerState> = new Map();
   private readonly BASE_URL: string = 'http://10.0.2.2:8080/api/v1';
   private readonly BASE_ASSET_URL: string = 'http://10.0.2.2:8080';
 
   aboutToAppear(): void {
-    this.loadAudioList();
+    this.loadData();
   }
 
   aboutToDisappear(): void {
     this.stopAll();
   }
 
-  async loadAudioList(): Promise<void> {
+  async loadData(): Promise<void> {
+    this.isLoading = true;
     try {
-      const list = await this.fetchData<Array<AudioItem>>(`${this.BASE_URL}/audio`);
-      if (list && Array.isArray(list)) {
-        this.audioList = list;
-      }
+      const results = await Promise.all([
+        this.fetchData<Array<AudioItem>>(`${this.BASE_URL}/audio`),
+        this.fetchData<Array<Scene>>(`${this.BASE_URL}/scenes`)
+      ]);
+      const audioList = results[0] as Array<AudioItem>;
+      const sceneList = results[1] as Array<Scene>;
+      
+      if (audioList) this.audioList = audioList;
+      if (sceneList) this.sceneList = sceneList;
     } catch (e) {
-      console.error(`[AudioPlayer] Failed: ${JSON.stringify(e)}`);
+      console.error(`[AudioPlayer] Load failed: ${JSON.stringify(e)}`);
     } finally {
       this.isLoading = false;
     }
   }
 
+  async loadAudioList(): Promise<void> {
+    // Keep for compatibility or remove
+    await this.loadData();
+  }
+
   async togglePlay(item: AudioItem): Promise<void> {
     const state = this.players.get(item.id);
-    if (state && state.isPlaying && state.player) {
-      await state.player.pause();
-      state.isPlaying = false;
-      this.activeAudioId = -1;
-      this.sessionStatus = `已暂停: ${item.name}`;
-    } else {
-      if (state && state.player) {
+    try {
+      if (state && state.state === PlaybackState.PLAYING && state.player) {
+        await state.player.pause();
+        state.state = PlaybackState.PAUSED;
+        state.isPlaying = false;
+        this.activeAudioId = -1;
+        this.sessionStatus = `已暂停: ${item.name}`;
+      } else if (state && state.state === PlaybackState.PAUSED && state.player) {
         await state.player.play();
+        state.state = PlaybackState.PLAYING;
         state.isPlaying = true;
         this.activeAudioId = item.id;
-      } else {
+        this.sessionStatus = `正在播放: ${item.name}`;
+      } else if (!state || state.state === PlaybackState.IDLE) {
         await this.createPlayer(item);
         this.activeAudioId = item.id;
+        this.sessionStatus = `正在加载: ${item.name}`;
       }
-      this.sessionStatus = `正在播放: ${item.name}`;
+    } catch (e) {
+      console.error(`[AudioPlayer] Toggle error: ${JSON.stringify(e)}`);
     }
   }
 
   async stop(item: AudioItem): Promise<void> {
     const state = this.players.get(item.id);
-    if (state && state.player) {
-      await state.player.stop();
-      await state.player.release();
-      this.players.delete(item.id);
-      if (this.activeAudioId === item.id) {
-        this.activeAudioId = -1;
+    try {
+      if (state && state.player) {
+        await state.player.stop();
+        await state.player.release();
+        this.players.delete(item.id);
+        if (this.activeAudioId === item.id) {
+          this.activeAudioId = -1;
+        }
+        this.sessionStatus = `已停止: ${item.name}`;
       }
-      this.sessionStatus = `已停止: ${item.name}`;
+    } catch (e) {
+      console.error(`[AudioPlayer] Stop error: ${JSON.stringify(e)}`);
     }
   }
 
   async stopAll(): Promise<void> {
+    if (this.timerId !== -1) {
+      clearInterval(this.timerId);
+      this.timerId = -1;
+      this.timerRemaining = 0;
+    }
     const entries = this.players.entries();
     let result = entries.next();
     while (!result.done) {
@@ -102,30 +133,70 @@ struct Index {
     }
   }
 
+  startSleepTimer(minutes: number): void {
+    if (this.timerId !== -1) {
+      clearInterval(this.timerId);
+    }
+    this.timerRemaining = minutes * 60;
+    this.sessionStatus = `定时关闭: ${minutes} 分钟后`;
+    this.timerId = setInterval(() => {
+      this.timerRemaining--;
+      if (this.timerRemaining <= 0) {
+        this.stopAll();
+        this.sessionStatus = '已通过定时器停止';
+      }
+    }, 1000);
+  }
+
+  showTimerSelection(): void {
+    this.getUIContext().showTextPickerDialog({
+      range: ['15分钟', '30分钟', '45分钟', '60分钟', '取消定时'],
+      onAccept: (result: TextPickerResult) => {
+        if (result.index === 4) {
+          if (this.timerId !== -1) {
+            clearInterval(this.timerId);
+            this.timerId = -1;
+            this.timerRemaining = 0;
+            this.sessionStatus = '已取消定时关闭';
+          }
+        } else {
+          const minutes = [15, 30, 45, 60][result.index as number];
+          this.startSleepTimer(minutes);
+        }
+      }
+    })
+  }
+
   private async createPlayer(item: AudioItem): Promise<void> {
     try {
       const avPlayer = await media.createAVPlayer();
       const url = item.url.startsWith('/') ? `${this.BASE_ASSET_URL}${item.url}` : item.url;
 
+      const playerState = new PlayerState();
+      playerState.player = avPlayer;
+      playerState.state = PlaybackState.LOADING;
+      playerState.isPlaying = false;
+      playerState.volume = this.defaultVolume;
+      this.players.set(item.id, playerState);
+
       avPlayer.on('stateChange', (state: media.AVPlayerState): void => {
         if (state === 'prepared') {
           avPlayer.play();
+          playerState.state = PlaybackState.PLAYING;
+          playerState.isPlaying = true;
+          this.sessionStatus = `正在播放: ${item.name}`;
         }
       });
 
       avPlayer.on('error', (err: BusinessError): void => {
         console.error(`[AudioPlayer] ${item.name} error: ${JSON.stringify(err)}`);
+        this.players.delete(item.id);
       });
 
       avPlayer.url = url;
-      avPlayer.loop = true;
-      avPlayer.setVolume(0.5);
+      avPlayer.loop = this.loopPlayback;
+      avPlayer.setVolume(this.defaultVolume);
 
-      const newState = new PlayerState();
-      newState.player = avPlayer;
-      newState.isPlaying = true;
-      newState.volume = 0.5;
-      this.players.set(item.id, newState);
     } catch (e) {
       console.error(`[AudioPlayer] Failed: ${JSON.stringify(e)}`);
     }
@@ -157,7 +228,7 @@ struct Index {
   }
 
   build() {
-    Tabs({ barPosition: BarPosition.End }) {
+    Tabs({ barPosition: BarPosition.End, index: this.currentTab }) {
       // Tab 1: 首页
       TabContent() {
         this.HomeTab()
@@ -241,10 +312,24 @@ struct Index {
         .layoutWeight(1)
 
         QuickActionCard({
+          title: '定时关闭',
+          description: this.timerRemaining > 0 ? `还剩 ${Math.floor(this.timerRemaining / 60)}分${this.timerRemaining % 60}秒` : '设置自动停止时间',
+          icon: $r('sys.symbol.clock'),
+          badge: this.timerRemaining > 0 ? 'On' : '',
+          onCardClick: () => {
+            this.showTimerSelection();
+          }
+        })
+        .layoutWeight(1)
+      }
+      .padding({ left: 24, right: 24, bottom: 12 })
+      .width('100%')
+
+      Row({ space: 12 }) {
+        QuickActionCard({
           title: '随机播放',
           description: '随机选择一个音频播放',
           icon: $r('sys.symbol.shuffle'),
-          badge: 'New',
           onCardClick: () => {
             if (this.audioList.length > 0) {
               const randomIndex = Math.floor(Math.random() * this.audioList.length);
@@ -253,12 +338,45 @@ struct Index {
           }
         })
         .layoutWeight(1)
+
+        QuickActionCard({
+          title: '查看更多',
+          description: '浏览所有白噪声资源',
+          icon: $r('sys.symbol.square_grid_2x2'),
+          onCardClick: () => {
+            this.currentTab = 1;
+          }
+        })
+        .layoutWeight(1)
       }
       .padding({ left: 24, right: 24, bottom: 16 })
       .width('100%')
 
+      // 场景推荐
+      Text('推荐场景')
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.text_primary'))
+        .width('100%')
+        .padding({ left: 24, right: 24, bottom: 12 })
+
+      if (this.sceneList.length > 0) {
+        List({ space: 12 }) {
+          ForEach(this.sceneList, (scene: Scene) => {
+            ListItem() {
+              this.SceneCard(scene)
+            }
+          }, (scene: Scene) => `${scene.id}`)
+        }
+        .listDirection(Axis.Horizontal)
+        .height(140)
+        .width('100%')
+        .padding({ left: 24, right: 24, bottom: 16 })
+        .scrollBar(BarState.Off)
+      }
+
       // 音频列表预览
-      Text('已加载音频')
+      Text('最近播放')
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.text_primary'))
@@ -319,7 +437,7 @@ struct Index {
             ForEach(this.audioList, (item: AudioItem): void => {
               AudioCard({
                 item: item,
-                isPlaying: this.activeAudioId === item.id,
+                state: this.getItemState(item.id),
                 volume: this.getVolume(item.id),
                 onPlay: (): void => { this.togglePlay(item) },
                 onStop: (): void => { this.stop(item) },
@@ -338,29 +456,70 @@ struct Index {
   }
 
   @Builder
+  SceneCard(scene: Scene): void {
+    Column() {
+      Image(scene.coverUrl)
+        .width('100%')
+        .height(80)
+        .borderRadius(12)
+        .objectFit(ImageFit.Cover)
+        .margin({ bottom: 8 })
+      // 场景卡片
+      Text(scene.name)
+        .fontSize(14)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.text_primary'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      Text(scene.description)
+        .fontSize(11)
+        .fontColor($r('app.color.text_secondary'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+    }
+    .width(160)
+    .padding(10)
+    .backgroundColor($r('app.color.surface_card'))
+    .borderRadius(16)
+    .onClick((): void => {
+      // 场景点击：播放场景下的所有音频（简化为播放第一个）
+      if (scene.tracks && scene.tracks.length > 0) {
+        this.togglePlay(scene.tracks[0]);
+      }
+    })
+  }
+
+  @Builder
   QuickAudioItem(item: AudioItem): void {
     Row({ space: 12 }) {
       Button() {
-        SymbolGlyph($r('sys.symbol.play_fill'))
+        SymbolGlyph(this.getItemState(item.id) === PlaybackState.PLAYING ? $r('sys.symbol.pause_fill') : 
+          (this.getItemState(item.id) === PlaybackState.LOADING ? $r('sys.symbol.arrow_clockwise') : $r('sys.symbol.play_fill')))
           .fontSize(18)
           .fontColor([$r('app.color.start_window_background')])
+          .rotate({ angle: this.getItemState(item.id) === PlaybackState.LOADING ? 360 : 0 })
+          .animation(this.getItemState(item.id) === PlaybackState.LOADING ? {
+            duration: 1000,
+            iterations: -1,
+            curve: Curve.Linear
+          } : { duration: 0 })
       }
       .width(36)
       .height(36)
       .type(ButtonType.Circle)
-      .backgroundColor('#4CAF50')
-      .onClick(() => { this.togglePlay(item) })
+      .backgroundColor(this.getItemState(item.id) === PlaybackState.PLAYING ? '#FF6B6B' : 
+        (this.getItemState(item.id) === PlaybackState.LOADING ? '#FFD93D' : '#4CAF50'))
+      .onClick((): void => { this.togglePlay(item) })
 
       Text(item.name)
         .fontSize(14)
         .fontColor($r('app.color.text_primary'))
         .layoutWeight(1)
 
-      if (this.activeAudioId === item.id) {
-        SymbolGlyph($r('sys.symbol.pause_fill'))
+      if (this.getItemState(item.id) === PlaybackState.PLAYING) {
+        SymbolGlyph($r('sys.symbol.waveform'))
           .fontSize(16)
           .fontColor(['#4CAF50'])
-          .animation({ duration: 500, iterations: -1 })
       }
     }
     .width('100%')
@@ -381,6 +540,11 @@ struct Index {
     }
     .padding({ top: 8, bottom: 8 })
     .animation({ duration: 200 })
+  }
+
+  getItemState(id: number): PlaybackState {
+    const state = this.players.get(id);
+    return state ? state.state : PlaybackState.IDLE;
   }
 
   getVolume(id: number): number {

@@ -6,6 +6,13 @@ const DOMAIN = 0x0000;
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    // 初始化应用级全局状态
+    AppStorage.setOrCreate('autoPlay', true);
+    AppStorage.setOrCreate('defaultVolume', 0.5);
+    AppStorage.setOrCreate('loopPlayback', true);
+    AppStorage.setOrCreate('versionName', '1.0.0');
+    AppStorage.setOrCreate('buildInfo', '2026-01-06');
+
     try {
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     } catch (err) {
