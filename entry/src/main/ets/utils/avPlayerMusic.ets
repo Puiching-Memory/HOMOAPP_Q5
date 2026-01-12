@@ -78,7 +78,33 @@ class AvPlayerMusic {
     this.GlobalMusic.img = song.img
     this.GlobalMusic.name = song.name
     this.GlobalMusic.author = song.author
+    this.GlobalMusic.waveform = song.waveform || []
+    hilog.info(0x0000, "HOMO", `Sync song: ${song.name}, Waveform points: ${this.GlobalMusic.waveform.length}`)
+    
+    // 应用响度均衡
+    this.applyLoudnessBalance()
+    
     SessionManager.SetMetaData(song)
+  }
+
+  // 计算并应用均衡后的音量
+  private applyLoudnessBalance() {
+    if (!this.avPlayer) return
+
+    let finalVolume = this.GlobalMusic.volume
+    
+    if (this.GlobalMusic.isLoudnessBalanced && this.GlobalMusic.waveform.length > 0) {
+      // 计算平均响度 (0.1 - 0.9 之间)
+      const avg = this.GlobalMusic.waveform.reduce((a, b) => a + b, 0) / this.GlobalMusic.waveform.length
+      // 目标基准响度设定为 0.5
+      const target = 0.5
+      // 计算补偿系数，限制在 0.5x 到 2.0x 之间避免过度放大或静音
+      const ratio = Math.max(0.5, Math.min(2.0, target / avg))
+      finalVolume = Math.min(1.0, this.GlobalMusic.volume * ratio)
+      hilog.info(0x0000, "HOMO", `Loudness Balance: avg=${avg.toFixed(3)}, ratio=${ratio.toFixed(2)}, volume=${finalVolume.toFixed(2)}`)
+    }
+    
+    this.avPlayer.setVolume(finalVolume)
   }
 
   async changePlay() {
@@ -100,6 +126,7 @@ class AvPlayerMusic {
       this.avPlayer.url = song.url
       this.avPlayer.setVolume(this.GlobalMusic.volume)
       this.GlobalMusic.isPlay = true
+      this.GlobalMusic.isShowPlayBar = true
     } catch (error) {
       const err = error as BusinessError
       hilog.error(0x0000, "HOMO", `changePlay error: ${err.message}`)
@@ -171,24 +198,22 @@ class AvPlayerMusic {
     }
   }
 
-  playResources(song: SongItemType) {
-    SessionManager.startContinuousTask()
-    SessionManager.setPlaybackStatus()
+  async playResources(song: SongItemType) {
+    await SessionManager.startContinuousTask()
     const index = this.GlobalMusic.playList.findIndex(item => item.id === song.id)
     if (index >= 0) {
       if (song.url === this.GlobalMusic.url && this.GlobalMusic.isPlay) {
         return
       }
       this.GlobalMusic.currentMusic = index
-      this.changePlay()
+      await this.changePlay()
     } else {
       this.GlobalMusic.playList.unshift(song)
       this.GlobalMusic.currentMusic = 0
-      this.changePlay()
+      await this.changePlay()
     }
-    if (!this.GlobalMusic.isShowPlayBar) {
-      this.GlobalMusic.isShowPlayBar = true
-    }
+    this.GlobalMusic.isShowPlayBar = true
+    SessionManager.setPlaybackStatus()
   }
 
   jumpToPlay(jumpToTime: number) {
@@ -222,11 +247,17 @@ class AvPlayerMusic {
   setVolume(volume: number) {
     try {
       this.GlobalMusic.volume = volume
-      this.avPlayer?.setVolume(volume)
+      this.applyLoudnessBalance()
     } catch (error) {
       const err = error as BusinessError
       hilog.error(0x0000, "HOMO", `setVolume error: ${err.message}`)
     }
+  }
+
+  // 外部切换均衡器开关
+  toggleLoudnessBalance(isOn: boolean) {
+    this.GlobalMusic.isLoudnessBalanced = isOn
+    this.applyLoudnessBalance()
   }
 
   async release() {

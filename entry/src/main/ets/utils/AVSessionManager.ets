@@ -20,7 +20,7 @@ class AVSessionManager {
       this.RegisterControlCommand()
     } catch (error) {
       const err = error as BusinessError
-      hilog.error(0x0000, "HOMO", `${err.message}`)
+      hilog.error(0x0000, "HOMO", `init session error: ${err.message}`)
     }
   }
 
@@ -46,15 +46,25 @@ class AVSessionManager {
         backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK,
         want
       )
+      hilog.info(0x0000, "HOMO", "Continuous task started successfully")
     } catch (error) {
       const err = error as BusinessError
-      hilog.error(0x0000, "HOMO", `${err.message}`)
+      if (err.code === 9800005 || err.code === 9800002) {
+        // 9800005: 已经申请过长久运行任务，忽略该错误
+        hilog.info(0x0000, "HOMO", "Continuous task already running")
+      } else {
+        hilog.error(0x0000, "HOMO", `startContinuousTask error: ${err.code} ${err.message}`)
+      }
     }
   }
 
   SetMetaData(song: SongItemType) {
+    if (!this.session) {
+      hilog.warn(0x0000, "HOMO", "SetMetaData failed: session not initialized")
+      return
+    }
     try {
-      this.session?.setAVMetadata({
+      this.session.setAVMetadata({
         assetId: song.id,
         title: song.name,
         mediaImage: song.img,
@@ -68,8 +78,12 @@ class AVSessionManager {
   }
 
   setPlaybackStatus() {
+    if (!this.session) {
+      hilog.warn(0x0000, "HOMO", "setPlaybackStatus skipped: session null")
+      return
+    }
     try {
-      this.session?.setAVPlaybackState({
+      this.session.setAVPlaybackState({
         state: this.GlobalMusic.isPlay
           ? avSession.PlaybackState.PLAYBACK_STATE_PLAY
           : avSession.PlaybackState.PLAYBACK_STATE_PAUSE,
@@ -79,56 +93,59 @@ class AVSessionManager {
       })
     } catch (error) {
       const err = error as BusinessError
-      hilog.error(0x0000, "HOMO", `setAVPlaybackState error: ${err.message}`)
+      hilog.error(0x0000, "HOMO", `setAVPlaybackState error: [${err.code}] ${err.message}`)
+      if (err.code === 5400102) {
+        // 尝试重新激活 Session
+        this.session.activate().catch(() => {})
+      }
     }
   }
 
   RegisterControlCommand() {
-    this.session?.on("play", () => {
-      try {
-        avPlayerManage.stopOrContinueSong()
-      } catch (err) {
-        hilog.error(0x0000, "HOMO", `play session error: ${JSON.stringify(err)}`)
-      }
-    })
-
-    this.session?.on("pause", () => {
-      try {
-        avPlayerManage.stopOrContinueSong()
-      } catch (err) {
-        hilog.error(0x0000, "HOMO", `pause session error: ${JSON.stringify(err)}`)
-      }
-    })
-
-    this.session?.on("playNext", () => {
-      try {
-        avPlayerManage.nextSong()
-      } catch (err) {
-        hilog.error(0x0000, "HOMO", `nextSong session error: ${JSON.stringify(err)}`)
-      }
-    })
-
-    this.session?.on("playPrevious", () => {
-      try {
-        avPlayerManage.preSong()
-      } catch (err) {
-        hilog.error(0x0000, "HOMO", `preSong session error: ${JSON.stringify(err)}`)
-      }
-    })
-
-    this.session?.on("seek", (n: number) => {
-      try {
-        avPlayerManage.jumpToPlay(n)
-      } catch (err) {
-        hilog.error(0x0000, "HOMO", `seek session error: ${JSON.stringify(err)}`)
-      }
-    })
-
     try {
+      this.session?.on("play", () => {
+        try {
+          avPlayerManage.stopOrContinueSong()
+        } catch (err) {
+          hilog.error(0x0000, "HOMO", `play session error: ${JSON.stringify(err)}`)
+        }
+      })
+
+      this.session?.on("pause", () => {
+        try {
+          avPlayerManage.stopOrContinueSong()
+        } catch (err) {
+          hilog.error(0x0000, "HOMO", `pause session error: ${JSON.stringify(err)}`)
+        }
+      })
+
+      this.session?.on("playNext", () => {
+        try {
+          avPlayerManage.nextSong()
+        } catch (err) {
+          hilog.error(0x0000, "HOMO", `nextSong session error: ${JSON.stringify(err)}`)
+        }
+      })
+
+      this.session?.on("playPrevious", () => {
+        try {
+          avPlayerManage.preSong()
+        } catch (err) {
+          hilog.error(0x0000, "HOMO", `preSong session error: ${JSON.stringify(err)}`)
+        }
+      })
+
+      this.session?.on("seek", (n: number) => {
+        try {
+          avPlayerManage.jumpToPlay(n)
+        } catch (err) {
+          hilog.error(0x0000, "HOMO", `seek session error: ${JSON.stringify(err)}`)
+        }
+      })
       this.session?.activate()
     } catch (error) {
       const err = error as BusinessError
-      hilog.error(0x0000, "HOMO", `activate error: ${err.message}`)
+      hilog.error(0x0000, "HOMO", `RegisterControlCommand or activate error: ${err.message}`)
     }
   }
 

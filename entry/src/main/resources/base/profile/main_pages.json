@@ -1,7 +1,6 @@
 {
   "src": [
     "pages/Index",
-    "pages/AudioPlayerPage",
     "pages/AboutPage",
     "pages/SettingsPage"
   ]

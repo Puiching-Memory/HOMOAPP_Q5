@@ -7,6 +7,7 @@ export class AudioItem {
   url: string = '';
   artist: string = '未知艺术家';
   cover_url: string = '';
+  waveform?: number[];
 }
 
 // 轮播图

@@ -14,5 +14,8 @@ export class GlobalMusic {
   @Trace playbackStatus: "单曲循环" | "随机播放" | "顺序播放" = "顺序播放"
   @Trace currentMusic: number = 0
   @Trace isShowPlayBar: boolean = false
+  @Trace isBarCollapsed: boolean = false // 新增：播放条折叠状态
+  @Trace waveform: number[] = [] // 新增：音频波形包络数据
+  @Trace isLoudnessBalanced: boolean = false // 新增：响度均衡开关
   @Trace playList: SongItemType[] = []
 }

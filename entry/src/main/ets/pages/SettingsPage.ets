@@ -44,14 +44,10 @@ export struct SettingsPage {
 
           // 显示设置
           SettingsSectionCard({ title: '显示设置' }) {
-            this.SettingsToggle('深色模式', false, (value: boolean): void => {
-              // 模拟深色模式切换逻辑
-              this.getUIContext().showAlertDialog({
-                title: '提示',
-                message: '深色模式切换成功(演示)',
-                confirm: { value: '确定', action: () => {} }
-              })
-            })
+            Text('显示设置已锁定')
+              .fontSize(14)
+              .fontColor($r('app.color.text_secondary'))
+              .padding({ top: 12, bottom: 12 })
           }
 
           // 关于

@@ -4,4 +4,5 @@ export interface SongItemType {
   author: string
   url: string
   id: string
+  waveform?: number[] // 可选：波形数据
 }

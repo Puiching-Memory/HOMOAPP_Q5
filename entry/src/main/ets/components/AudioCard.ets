@@ -10,21 +10,13 @@ export struct AudioCard {
   @Prop item: AudioItem = new AudioItem();
   // 播放状态
   @Prop state: PlaybackState = PlaybackState.IDLE;
-  // 音量
-  @Prop volume: number = 0.5;
 
   // 事件回调
   onPlay: () => void = () => {};
   onStop: () => void = () => {};
-  onVolumeChange: (value: number) => void = () => {};
 
   // 内部状态
   @State private expanded: boolean = false;
-  @State private localVolume: number = 0.5;
-
-  aboutToAppear() {
-    this.localVolume = this.volume;
-  }
 
   // 获取按钮背景色
   private getButtonColor(): string {
@@ -104,15 +96,6 @@ export struct AudioCard {
             .fontColor($r('app.color.text_secondary'))
             .width('100%')
             .textAlign(TextAlign.Start)
-
-          Row({ space: 6 }) {
-            SymbolGlyph($r('sys.symbol.speaker_wave_2'))
-              .fontSize(12)
-              .fontColor([this.getVolumeColor()])
-            Text(`${Math.round(this.volume * 100)}%`)
-              .fontSize(12)
-              .fontColor($r('app.color.text_secondary'))
-          }
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
@@ -134,30 +117,9 @@ export struct AudioCard {
       .width('100%')
       .padding(14)
 
-      // 展开面板：音量控制和停止按钮
+      // 展开面板：停止按钮
       if (this.expanded) {
         Column({ space: 12 }) {
-          // 音量滑块
-          Row({ space: 8 }) {
-            SymbolGlyph($r('sys.symbol.speaker_wave_2'))
-              .fontSize(16)
-              .fontColor([$r('app.color.text_secondary')])
-            Slider({
-              value: this.localVolume * 100,
-              min: 0,
-              max: 100,
-              step: 1
-            })
-              .layoutWeight(1)
-              .blockColor('#5CD6FF')
-              .trackColor('#27518B')
-              .selectedColor('#5CD6FF')
-              .onChange((value: number) => {
-                this.localVolume = value / 100;
-                this.onVolumeChange(this.localVolume);
-              })
-          }
-
           // 停止按钮
           Button('停止播放')
             .width('100%')
@@ -179,15 +141,5 @@ export struct AudioCard {
     .borderRadius(16)
     .clip(true)
     .animation({ duration: 300 })
-  }
-
-  private getVolumeColor(): ResourceColor {
-    if (this.volume === 0) {
-      return $r('app.color.text_secondary');
-    } else if (this.volume < 0.5) {
-      return '#4CAF50';
-    } else {
-      return '#5CD6FF';
-    }
   }
 }

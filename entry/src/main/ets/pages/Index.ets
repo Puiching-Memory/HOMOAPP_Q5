@@ -2,7 +2,6 @@ import http from '@ohos.net.http';
 import { BusinessError } from '@ohos.base';
 import media from '@ohos.multimedia.media';
 import { AudioItem, PlaybackState, Scene, Banner, Recommendation, Moment } from '../model/AudioModel';
-import { AudioCard } from '../components/AudioCard';
 import { StatusCard, QuickActionCard } from '../components/StatusCard';
 import { AboutPage } from './AboutPage';
 import { SettingsPage } from './SettingsPage';
@@ -11,11 +10,13 @@ import { GlobalMusic } from '../type/GlobalMusic';
 import { SongItemType } from '../type/SongItemType';
 import { AppStorageV2 } from '@kit.ArkUI';
 
+import { MusicPlayerBar } from '../components/MusicPlayerBar';
+import { AudioPlayerPage } from './AudioPlayerPage';
+
 @Entry
 @Component
 struct Index {
   @State currentTab: number = 0;
-  @State audioList: Array<AudioItem> = [];
   @State sceneList: Array<Scene> = [];
   @State banners: Array<Banner> = [];
   @State recommendations: Array<Recommendation> = [];
@@ -23,7 +24,6 @@ struct Index {
   @State isLoading: boolean = true;
   @State isRefreshing: boolean = false;
   @State sessionStatus: string = '选择要播放的音频';
-  @State activeAudioId: number = -1;
   @State timerRemaining: number = 0; // 秒
   private timerId: number = -1;
 
@@ -50,76 +50,23 @@ struct Index {
     this.stopAll();
   }
 
-  private toSong(item: AudioItem): SongItemType {
-    return {
-      id: item.id.toString(),
-      name: item.name,
-      author: item.artist,
-      img: this.getAssetUrl(item.cover_url),
-      url: this.getAssetUrl(item.url)
-    };
-  }
-
-  getItemState(id: number): PlaybackState {
-    const song = this.audioList.find(a => a.id === id);
-    if (!song) return PlaybackState.IDLE;
-    
-    if (this.globalMusic.url === this.getAssetUrl(song.url)) {
-      if (this.globalMusic.isLoading) return PlaybackState.LOADING;
-      return this.globalMusic.isPlay ? PlaybackState.PLAYING : PlaybackState.PAUSED;
-    }
-    return PlaybackState.IDLE;
-  }
-
-  getVolume(id: number): number {
-    return this.globalMusic.volume;
-  }
-
   async loadData(): Promise<void> {
     this.isLoading = true;
     try {
-      const results_audio = await this.fetchData<Array<AudioItem>>(`${this.BASE_URL}/audio`);
       const results_scenes = await this.fetchData<Array<Scene>>(`${this.BASE_URL}/scenes`);
       const results_banners = await this.fetchData<Array<Banner>>(`${this.BASE_URL}/banners`);
       const results_recs = await this.fetchData<Array<Recommendation>>(`${this.BASE_URL}/recommendations`);
       const results_moments = await this.fetchData<Array<Moment>>(`${this.BASE_URL}/moments`);
       
-      this.audioList = results_audio || [];
       this.sceneList = results_scenes || [];
       this.banners = results_banners || [];
       this.recommendations = results_recs || [];
       this.moments = results_moments || [];
     } catch (e) {
-      console.error(`[AudioPlayer] Load failed: ${JSON.stringify(e)}`);
+      const err = e as BusinessError;
+      console.error(`[Index] Load failed: ${JSON.stringify(err)}`);
     } finally {
       this.isLoading = false;
-    }
-  }
-
-  async togglePlay(item: AudioItem): Promise<void> {
-    const song = this.toSong(item);
-    try {
-      if (this.globalMusic.url === song.url) {
-        avPlayerManage.stopOrContinueSong();
-      } else {
-        avPlayerManage.playResources(song);
-        this.activeAudioId = item.id;
-      }
-      this.sessionStatus = this.globalMusic.isPlay ? `正在播放: ${item.name}` : `已暂停: ${item.name}`;
-    } catch (e) {
-      console.error(`[AudioPlayer] Toggle error: ${JSON.stringify(e)}`);
-    }
-  }
-
-  async stop(item: AudioItem): Promise<void> {
-    try {
-      if (this.globalMusic.url === this.getAssetUrl(item.url)) {
-        await avPlayerManage.stop();
-        this.activeAudioId = -1;
-        this.sessionStatus = `已停止: ${item.name}`;
-      }
-    } catch (e) {
-      console.error(`[AudioPlayer] Stop error: ${JSON.stringify(e)}`);
     }
   }
 
@@ -130,13 +77,7 @@ struct Index {
       this.timerRemaining = 0;
     }
     await avPlayerManage.stop();
-    this.activeAudioId = -1;
     this.sessionStatus = '已停止全部';
-  }
-
-  onVolumeChange(item: AudioItem, value: number): void {
-    avPlayerManage.setVolume(value);
-    this.sessionStatus = `音量 ${Math.round(value * 100)}%`;
   }
 
   startSleepTimer(minutes: number): void {
@@ -188,7 +129,8 @@ struct Index {
             const result: T = JSON.parse(jsonStr) as T;
             resolve(result);
           } catch (e) {
-            reject(e);
+            const err = e as BusinessError;
+            reject(err);
           }
         } else {
           reject(err || new Error(`HTTP ${data.responseCode}`));
@@ -199,38 +141,46 @@ struct Index {
   }
 
   build() {
-    Tabs({ barPosition: BarPosition.End, index: this.currentTab }) {
-      // Tab 1: 首页
-      TabContent() {
-        this.HomeTab()
-      }
-      .tabBar(this.TabBarItem('首页', $r('sys.symbol.house'), 0))
+    Stack({ alignContent: Alignment.Bottom }) {
+      Tabs({ barPosition: BarPosition.End, index: this.currentTab }) {
+        // Tab 1: 首页
+        TabContent() {
+          this.HomeTab()
+        }
+        .tabBar(this.TabBarItem('首页', $r('sys.symbol.house'), 0))
 
-      // Tab 2: 音频播放
-      TabContent() {
-        this.AudioTab()
-      }
-      .tabBar(this.TabBarItem('播放', $r('sys.symbol.music'), 1))
+        // Tab 2: 音频播放 (专用区域)
+        TabContent() {
+          AudioPlayerPage()
+        }
+        .tabBar(this.TabBarItem('播放', $r('sys.symbol.music'), 1))
 
-      // Tab 3: 设置
-      TabContent() {
-        SettingsPage()
-      }
-      .tabBar(this.TabBarItem('设置', $r('sys.symbol.gearshape'), 2))
+        // Tab 3: 设置
+        TabContent() {
+          SettingsPage()
+        }
+        .tabBar(this.TabBarItem('设置', $r('sys.symbol.gearshape'), 2))
 
-      // Tab 4: 关于
-      TabContent() {
-        AboutPage()
+        // Tab 4: 关于
+        TabContent() {
+          AboutPage()
+        }
+        .tabBar(this.TabBarItem('关于', $r('sys.symbol.info_circle'), 3))
       }
-      .tabBar(this.TabBarItem('关于', $r('sys.symbol.info_circle'), 3))
+      .barWidth('100%')
+      .barHeight(56)
+      .barBackgroundColor($r('app.color.surface_card'))
+      .onChange((index: number): void => {
+        this.currentTab = index;
+      })
+      .animationDuration(300)
+
+      if (this.globalMusic.isShowPlayBar) {
+        MusicPlayerBar()
+          .margin({ bottom: 56 }) // 躲开底部 TabBar
+          .transition(TransitionEffect.move(TransitionEdge.BOTTOM).combine(TransitionEffect.opacity(0)))
+      }
     }
-    .barWidth('100%')
-    .barHeight(56)
-    .barBackgroundColor($r('app.color.surface_card'))
-    .onChange((index: number): void => {
-      this.currentTab = index;
-    })
-    .animationDuration(300)
   }
 
   @Builder
@@ -242,26 +192,9 @@ struct Index {
           .fontSize(28)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
-        Blank()
-        Button('停止全部')
-          .onClick(() => { this.stopAll() })
       }
       .width('100%')
       .padding({ left: 24, right: 24, top: 40, bottom: 16 })
-
-      // 状态卡片
-      StatusCard({
-        title: '播放状态',
-        status: this.sessionStatus,
-        icon: $r('sys.symbol.music'),
-        statusColor: this.activeAudioId >= 0 ? '#4CAF50' : '#A2B9D8',
-        showAction: true,
-        actionText: '管理播放',
-        onAction: () => {
-          this.currentTab = 1;
-        }
-      })
-      .padding({ left: 24, right: 24, bottom: 16 })
 
       Refresh({ refreshing: $$this.isRefreshing }) {
         Scroll() {
@@ -331,7 +264,7 @@ struct Index {
           }
 
           // 快捷操作
-          Text('快速入口')
+          Text('快捷功能')
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))
@@ -340,19 +273,16 @@ struct Index {
 
           Row({ space: 12 }) {
             QuickActionCard({
-              title: '全部停止',
-              description: '管理所有音频项',
-              icon: $r('sys.symbol.stop_circle'),
-              onCardClick: () => { this.stopAll(); }
-            }).layoutWeight(1)
-
-            QuickActionCard({
-              title: '定时器',
-              description: this.timerRemaining > 0 ? `剩${Math.floor(this.timerRemaining/60)}分` : '点击设置',
+              title: '睡眠定时',
+              description: this.timerRemaining > 0 ? `剩 ${Math.floor(this.timerRemaining/60)} 分钟` : '点击设置计时器',
               icon: $r('sys.symbol.clock'),
-              badge: this.timerRemaining > 0 ? 'ON' : '',
+              badge: this.timerRemaining > 0 ? '计时中' : '',
               onCardClick: () => { this.showTimerSelection(); }
             }).layoutWeight(1)
+
+            // 占位卡片或未来功能
+            Column()
+              .layoutWeight(1)
           }
           .padding({ left: 24, right: 24, bottom: 12 })
 
@@ -396,6 +326,7 @@ struct Index {
                       .width(40).height(40).borderRadius(20)
                     Text(moment.author)
                       .fontSize(16).fontWeight(FontWeight.Medium)
+                      .fontColor($r('app.color.text_primary'))
                   }
                   .width('100%')
                   .margin({ bottom: 8 })
@@ -419,7 +350,7 @@ struct Index {
                 .borderRadius(16)
               })
             }
-            .padding({ left: 24, right: 24, bottom: 40 })
+            .padding({ left: 24, right: 24, bottom: 100 })
           }
         }
       }
@@ -430,56 +361,6 @@ struct Index {
         });
       })
       .layoutWeight(1)
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('app.color.start_window_background'))
-  }
-
-  @Builder
-  AudioTab(): void {
-    Column() {
-      Row() {
-        Text('音频播放')
-          .fontSize(28)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-        Blank()
-        Button('停止全部')
-          .onClick(() => { this.stopAll() })
-      }
-      .width('100%')
-      .padding({ left: 24, right: 24, top: 40, bottom: 16 })
-
-      Text(this.sessionStatus)
-        .fontSize(14)
-        .fontColor($r('app.color.text_secondary'))
-        .width('100%')
-        .padding({ left: 24, right: 24, bottom: 16 })
-
-      if (this.isLoading) {
-        LoadingProgress()
-          .width(48)
-          .height(48)
-          .layoutWeight(1)
-      } else {
-        Scroll() {
-          Column({ space: 12 }) {
-            ForEach(this.audioList, (item: AudioItem): void => {
-              AudioCard({
-                item: item,
-                state: this.getItemState(item.id),
-                volume: this.getVolume(item.id),
-                onPlay: (): void => { this.togglePlay(item) },
-                onStop: (): void => { this.stop(item) },
-                onVolumeChange: (value: number): void => { this.onVolumeChange(item, value) }
-              })
-            }, (item: AudioItem): string => `${item.id}`)
-          }
-          .padding(24)
-        }
-        .layoutWeight(1)
-      }
     }
     .width('100%')
     .height('100%')
@@ -511,50 +392,6 @@ struct Index {
     .padding(10)
     .backgroundColor($r('app.color.surface_card'))
     .borderRadius(16)
-    .onClick((): void => {
-      if (scene.tracks && scene.tracks.length > 0) {
-        this.togglePlay(scene.tracks[0]);
-      }
-    })
-  }
-
-  @Builder
-  QuickAudioItem(item: AudioItem): void {
-    Row({ space: 12 }) {
-      Button() {
-        SymbolGlyph(this.getItemState(item.id) === PlaybackState.PLAYING ? $r('sys.symbol.pause_fill') : 
-          (this.getItemState(item.id) === PlaybackState.LOADING ? $r('sys.symbol.arrow_clockwise') : $r('sys.symbol.play_fill')))
-          .fontSize(18)
-          .fontColor([$r('app.color.start_window_background')])
-          .rotate({ angle: this.getItemState(item.id) === PlaybackState.LOADING ? 360 : 0 })
-          .animation(this.getItemState(item.id) === PlaybackState.LOADING ? {
-            duration: 1000,
-            iterations: -1,
-            curve: Curve.Linear
-          } : { duration: 0 })
-      }
-      .width(36)
-      .height(36)
-      .type(ButtonType.Circle)
-      .backgroundColor(this.getItemState(item.id) === PlaybackState.PLAYING ? '#FF6B6B' : 
-        (this.getItemState(item.id) === PlaybackState.LOADING ? '#FFD93D' : '#4CAF50'))
-      .onClick((): void => { this.togglePlay(item) })
-
-      Text(item.name)
-        .fontSize(14)
-        .fontColor($r('app.color.text_primary'))
-        .layoutWeight(1)
-
-      if (this.getItemState(item.id) === PlaybackState.PLAYING) {
-        SymbolGlyph($r('sys.symbol.waveform'))
-          .fontSize(16)
-          .fontColor(['#4CAF50'])
-      }
-    }
-    .width('100%')
-    .padding(12)
-    .backgroundColor($r('app.color.surface_card'))
-    .borderRadius(12)
   }
 
   @Builder
@@ -562,10 +399,10 @@ struct Index {
     Column({ space: 4 }) {
       SymbolGlyph(icon)
         .fontSize(22)
-        .fontColor(this.currentTab === index ? ['#5CD6FF'] : ['#A2B9D8'])
+        .fontColor(this.currentTab === index ? [$r('app.color.primary_accent')] : [$r('app.color.text_secondary')])
       Text(title)
         .fontSize(10)
-        .fontColor(this.currentTab === index ? '#5CD6FF' : '#A2B9D8')
+        .fontColor(this.currentTab === index ? $r('app.color.primary_accent') : $r('app.color.text_secondary'))
     }
     .padding({ top: 8, bottom: 8 })
     .animation({ duration: 200 })
