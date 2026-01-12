@@ -10,6 +10,21 @@
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET"
+      },
+      {
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+        "reason": "$string:permission_reason_background",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "always"
+        }
+      }
+    ],
     "abilities": [
       {
         "name": "EntryAbility",
@@ -20,6 +35,9 @@
         "startWindowIcon": "$media:startIcon",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
+        "backgroundModes": [
+          "audioPlayback"
+        ],
         "skills": [
           {
             "entities": [
@@ -50,11 +68,6 @@
       {
         "name": "network_config",
         "resource": "$profile:network_config"
-      }
-    ],
-    "requestPermissions": [
-      {
-        "name": "ohos.permission.INTERNET"
       }
     ]
   }

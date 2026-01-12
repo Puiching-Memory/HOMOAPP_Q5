@@ -4,8 +4,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     NOISE_BACKEND_PORT=8080 \
-    NOISE_DATA_DIR=/app/data \
-    NOISE_DB_PATH=/app/data/white_noise.db
+    NOISE_DATA_DIR=/app/data
 
 WORKDIR /app
 
@@ -17,6 +16,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY app/ ./app/
 COPY data/ ./data/
+COPY static/ ./static/
 
 # Expose port
 EXPOSE 8080

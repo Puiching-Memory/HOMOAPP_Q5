@@ -1,22 +1,30 @@
 import http from '@ohos.net.http';
 import { BusinessError } from '@ohos.base';
-import media from '@ohos.multimedia.media';
-import { AudioItem, PlayerState, PlaybackState } from '../model/AudioModel';
+import { AudioItem, PlaybackState } from '../model/AudioModel';
 import { AudioCard } from '../components/AudioCard';
+import { avPlayerManage } from '../utils/avPlayerMusic';
+import { GlobalMusic } from '../type/GlobalMusic';
+import { SongItemType } from '../type/SongItemType';
+import { AppStorageV2 } from '@kit.ArkUI';
 
 @Entry
 @Component
-export struct AudioPlayerPage {
+struct AudioPlayerPage {
   @State audioList: Array<AudioItem> = [];
   @State isLoading: boolean = true;
   @State sessionStatus: string = '选择要播放的音频';
-  @State showVolumePanel: number = -1;
-
-  private players: Map<number, PlayerState> = new Map();
+  private globalMusic: GlobalMusic = AppStorageV2.connect(GlobalMusic, 'GlobalMusic', () => new GlobalMusic())!;
   private readonly BASE_URL: string = 'http://10.0.2.2:8080/api/v1';
   private readonly BASE_ASSET_URL: string = 'http://10.0.2.2:8080';
 
+  getAssetUrl(url: string | undefined): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${this.BASE_ASSET_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
+
   aboutToAppear(): void {
+    avPlayerManage.init();
     this.loadAudioList();
   }
 
@@ -29,6 +37,16 @@ export struct AudioPlayerPage {
       const list = await this.fetchData<Array<AudioItem>>(`${this.BASE_URL}/audio`);
       if (list && Array.isArray(list)) {
         this.audioList = list;
+        const playlist = list.map(item => this.toSong(item));
+        this.globalMusic.playList = playlist;
+        if (playlist.length > 0) {
+          this.globalMusic.currentMusic = 0;
+          const first = playlist[0];
+          this.globalMusic.img = first.img;
+          this.globalMusic.name = first.name;
+          this.globalMusic.author = first.author;
+          this.globalMusic.url = first.url;
+        }
       }
     } catch (e) {
       console.error(`[AudioPlayer] Failed: ${JSON.stringify(e)}`);
@@ -38,21 +56,15 @@ export struct AudioPlayerPage {
   }
 
   async togglePlay(item: AudioItem): Promise<void> {
-    const state = this.players.get(item.id);
+    const song = this.toSong(item);
+    const current = this.globalMusic.playList[this.globalMusic.currentMusic];
     try {
-      if (state && state.state === PlaybackState.PLAYING && state.player) {
-        await state.player.pause();
-        state.state = PlaybackState.PAUSED;
-        state.isPlaying = false;
-        this.sessionStatus = `已暂停: ${item.name}`;
-      } else if (state && state.state === PlaybackState.PAUSED && state.player) {
-        await state.player.play();
-        state.state = PlaybackState.PLAYING;
-        state.isPlaying = true;
+      if (current && current.id === song.id) {
+        avPlayerManage.stopOrContinueSong();
+        this.sessionStatus = this.globalMusic.isPlay ? `正在播放: ${item.name}` : `已暂停: ${item.name}`;
+      } else {
+        avPlayerManage.playResources(song);
         this.sessionStatus = `正在播放: ${item.name}`;
-      } else if (!state || state.state === PlaybackState.IDLE) {
-        await this.createPlayer(item);
-        this.sessionStatus = `正在加载: ${item.name}`;
       }
     } catch (e) {
       console.error(`[AudioPlayer] Toggle error: ${JSON.stringify(e)}`);
@@ -60,79 +72,23 @@ export struct AudioPlayerPage {
   }
 
   async stop(item: AudioItem): Promise<void> {
-    const state = this.players.get(item.id);
-    try {
-      if (state && state.player) {
-        await state.player.stop();
-        await state.player.release();
-        this.players.delete(item.id);
-        this.sessionStatus = `已停止: ${item.name}`;
-      }
-    } catch (e) {
-      console.error(`[AudioPlayer] Stop error: ${JSON.stringify(e)}`);
+    const current = this.globalMusic.playList[this.globalMusic.currentMusic];
+    if (!current || current.id !== item.id.toString()) {
+      return;
     }
+    await avPlayerManage.stop();
+    this.sessionStatus = `已停止: ${item.name}`;
   }
 
   async stopAll(): Promise<void> {
-    const entries = this.players.entries();
-    let result = entries.next();
-    while (!result.done) {
-      const state = result.value[1];
-      try {
-        if (state.player) {
-          await state.player.stop();
-          await state.player.release();
-        }
-      } catch (e) {
-        console.error(`[AudioPlayer] Stop all error: ${JSON.stringify(e)}`);
-      }
-      result = entries.next();
-    }
-    this.players.clear();
+    await avPlayerManage.stop();
     this.sessionStatus = '已停止全部';
   }
 
   onVolumeChange(item: AudioItem, value: number): void {
-    const state = this.players.get(item.id);
-    if (state && state.player) {
-      state.volume = value;
-      state.player.setVolume(value);
-    }
-  }
-
-  private async createPlayer(item: AudioItem): Promise<void> {
-    try {
-      const avPlayer = await media.createAVPlayer();
-      const url = item.url.startsWith('/') ? `${this.BASE_ASSET_URL}${item.url}` : item.url;
-
-      const playerState = new PlayerState();
-      playerState.player = avPlayer;
-      playerState.state = PlaybackState.LOADING;
-      playerState.isPlaying = false;
-      playerState.volume = 0.5;
-      this.players.set(item.id, playerState);
-
-      avPlayer.on('stateChange', (state: media.AVPlayerState): void => {
-        if (state === 'prepared') {
-          avPlayer.play();
-          playerState.state = PlaybackState.PLAYING;
-          playerState.isPlaying = true;
-          this.sessionStatus = `正在播放: ${item.name}`;
-        }
-      });
-
-      avPlayer.on('error', (err: BusinessError): void => {
-        console.error(`[AudioPlayer] ${item.name} error: ${JSON.stringify(err)}`);
-        this.players.delete(item.id);
-      });
-
-      avPlayer.url = url;
-      avPlayer.loop = true;
-      avPlayer.setVolume(0.5);
-
-    } catch (e) {
-      console.error(`[AudioPlayer] Failed: ${JSON.stringify(e)}`);
-    }
+    avPlayerManage.setVolume(value);
+    this.globalMusic.volume = value;
+    this.sessionStatus = `音量 ${Math.round(value * 100)}%`;
   }
 
   private async fetchData<T>(url: string): Promise<T> {
@@ -210,12 +166,27 @@ export struct AudioPlayerPage {
   }
 
   getItemState(id: number): PlaybackState {
-    const state = this.players.get(id);
-    return state ? state.state : PlaybackState.IDLE;
+    const song = this.audioList.find(a => a.id === id);
+    if (!song) return PlaybackState.IDLE;
+    
+    if (this.globalMusic.url === this.getAssetUrl(song.url)) {
+      if (this.globalMusic.isLoading) return PlaybackState.LOADING;
+      return this.globalMusic.isPlay ? PlaybackState.PLAYING : PlaybackState.PAUSED;
+    }
+    return PlaybackState.IDLE;
   }
 
   getVolume(id: number): number {
-    const state = this.players.get(id);
-    return state ? state.volume : 0.5;
+    return this.globalMusic.volume;
+  }
+
+  private toSong(item: AudioItem): SongItemType {
+    return {
+      id: item.id.toString(),
+      name: item.name,
+      author: item.artist || '未知艺术家',
+      img: this.getAssetUrl(item.cover_url),
+      url: this.getAssetUrl(item.url)
+    };
   }
 }

@@ -1,0 +1,7 @@
+[
+  {"id": 1, "img": "/static/recommendList/list1.png", "title": "每日推荐 | 晨间专注", "count": "120.5万"},
+  {"id": 2, "img": "/static/recommendList/list2.png", "title": "深度睡眠 | 雨声白噪音", "count": "450.2万"},
+  {"id": 3, "img": "/static/recommendList/list3.png", "title": "冥想时刻 | 森林深处", "count": "89.3万"},
+  {"id": 4, "img": "/static/recommendList/list4.png", "title": "工作伴侣 | 咖啡馆氛围", "count": "231.1万"},
+  {"id": 5, "img": "/static/recommendList/litst5.png", "title": "夏日回忆 | 此时此刻", "count": "15.7万"}
+]

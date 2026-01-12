@@ -12,21 +12,14 @@ class Settings:
     """Application runtime configuration loaded from environment."""
 
     def __init__(self) -> None:
-        default_db = BASE_DIR / "data" / "white_noise.db"
         default_data_dir = BASE_DIR / "data"
 
         self.port = int(os.getenv("NOISE_BACKEND_PORT", "8080"))
-        self.db_path = Path(os.getenv("NOISE_DB_PATH", default_db)).resolve()
         self.data_dir = Path(os.getenv("NOISE_DATA_DIR", default_data_dir)).resolve()
-
-    @property
-    def sqlite_url(self) -> str:
-        return f"sqlite:///{self.db_path}"
+        self.local_ip = os.getenv("NOISE_LOCAL_IP", None)
 
     def ensure_paths(self) -> None:
-        """Create directories for the SQLite file and data files if missing."""
-        if self.db_path.parent.name:
-            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        """Create directories for data files if missing."""
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
 

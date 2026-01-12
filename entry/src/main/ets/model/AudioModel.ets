@@ -5,7 +5,32 @@ export class AudioItem {
   id: number = 0;
   name: string = '';
   url: string = '';
-  icon: string = '';
+  artist: string = '未知艺术家';
+  cover_url: string = '';
+}
+
+// 轮播图
+export class Banner {
+  url: string = '';
+}
+
+// 推荐项
+export class Recommendation {
+  id: number = 0;
+  img: string = '';
+  title: string = '';
+  count: string = '';
+}
+
+// 动态信息
+export class Moment {
+  id: number = 0;
+  author: string = '';
+  avatar: string = '';
+  content: string = '';
+  comment: number = 0;
+  like: number = 0;
+  song: AudioItem = new AudioItem();
 }
 
 // 播放状态枚举
@@ -14,14 +39,6 @@ export enum PlaybackState {
   LOADING,
   PLAYING,
   PAUSED
-}
-
-// 播放器状态
-export class PlayerState {
-  player: media.AVPlayer | null = null;
-  state: PlaybackState = PlaybackState.IDLE;
-  isPlaying: boolean = false; // 保留旧的标识以便兼容，或者直接替换
-  volume: number = 0.5;
 }
 
 // 场景模型

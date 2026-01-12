@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "author": "晨曦雨后",
+    "avatar": "/static/avatar/h0.png",
+    "content": "这个雨声真的太治愈了，昨晚睡得很香。仿佛回到了乡下的老房子。",
+    "comment": 12,
+    "like": 128,
+    "song": {
+      "id": 1,
+      "name": "治愈雨声",
+      "url": "/data/light_rain.mp3",
+      "artist": "自然之力",
+      "cover_url": "/static/song/0.png"
+    }
+  },
+  {
+    "id": 2,
+    "author": "都市筑梦人",
+    "avatar": "/static/avatar/h1.png",
+    "content": "海浪的声音让我感受到了自由。推荐大家在冥想的时候听。",
+    "comment": 8,
+    "like": 64,
+    "song": {
+      "id": 2,
+      "name": "海洋呼吸",
+      "url": "/data/ocean_waves.mp3",
+      "artist": "深海",
+      "cover_url": "/static/song/1.png"
+    }
+  },
+  {
+    "id": 3,
+    "author": "代码演奏家",
+    "avatar": "/static/avatar/h4.png",
+    "content": "写代码必备的神器。环境音真的很能让人进入Flow状态。",
+    "comment": 15,
+    "like": 210,
+    "song": {
+      "id": 5,
+      "name": "午夜极光",
+      "url": "/static/song/5.mp3",
+      "artist": "幻象",
+      "cover_url": "/static/song/5.png"
+    }
+  },
+  {
+    "id": 4,
+    "author": "书虫阿米",
+    "avatar": "/static/avatar/h10.png",
+    "content": "伴着篝火的声音看书，是这个冬天最幸福的事。",
+    "comment": 3,
+    "like": 45,
+    "song": {
+      "id": 6,
+      "name": "温暖篝火",
+      "url": "/static/song/6.mp3",
+      "artist": "炉火",
+      "cover_url": "/static/song/6.png"
+    }
+  }
+]

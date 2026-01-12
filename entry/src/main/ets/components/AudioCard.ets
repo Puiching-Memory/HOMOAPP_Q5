@@ -92,11 +92,16 @@ export struct AudioCard {
         .animation({ duration: 200 })
 
         // 名称和音量指示
-        Column({ space: 6 }) {
+        Column({ space: 4 }) {
           Text(this.item.name)
             .fontSize(16)
-            .fontWeight(FontWeight.Medium)
+            .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))
+            .width('100%')
+          
+          Text(this.item.artist || '环境白噪音')
+            .fontSize(12)
+            .fontColor($r('app.color.text_secondary'))
             .width('100%')
             .textAlign(TextAlign.Start)
 

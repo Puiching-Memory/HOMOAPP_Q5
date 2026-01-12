@@ -1,6 +1,8 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { avPlayerManage } from '../utils/avPlayerMusic';
+import { SessionManager } from '../utils/AVSessionManager';
 
 const DOMAIN = 0x0000;
 
@@ -26,6 +28,8 @@ export default class EntryAbility extends UIAbility {
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
+    avPlayerManage.init();
+    SessionManager.init(this.context);
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
@@ -41,6 +45,8 @@ export default class EntryAbility extends UIAbility {
   onWindowStageDestroy(): void {
     // Main window is destroyed, release UI related resources
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageDestroy');
+    avPlayerManage.release();
+    SessionManager.DestroySession();
   }
 
   onForeground(): void {

@@ -1,0 +1,77 @@
+[
+  {
+    "id": 1,
+    "name": "雨夜静听",
+    "description": "微雨掠过窗沿，营造低调专注的脑波节奏。",
+    "coverUrl": "/static/recommendList/list1.png",
+    "tracks": [
+      {
+        "id": 101,
+        "name": "细雨",
+        "url": "/data/light_rain.mp3",
+        "artist": "自然之力",
+        "cover_url": "/static/song/0.png"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "海浪低语",
+    "description": "海浪推移节奏柔慢，波光与晚风共同铺出催眠底色。",
+    "coverUrl": "/static/recommendList/list2.png",
+    "tracks": [
+      {
+        "id": 102,
+        "name": "远洋海浪",
+        "url": "/data/ocean_waves.mp3",
+        "artist": "深海",
+        "cover_url": "/static/song/1.png"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "咖啡馆午后",
+    "description": "研磨声、低语声、瓷杯轻扣声，这里有最适合思考的白噪音。",
+    "coverUrl": "/static/recommendList/list3.png",
+    "tracks": [
+      {
+        "id": 103,
+        "name": "浓郁香气",
+        "url": "/static/song/2.mp3",
+        "artist": "城市噪音",
+        "cover_url": "/static/song/2.png"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "森林秘境",
+    "description": "鸟鸣、叶动、风过林间，把大自然的呼吸带进卧室。",
+    "coverUrl": "/static/recommendList/list4.png",
+    "tracks": [
+      {
+        "id": 104,
+        "name": "翠鸟鸣叫",
+        "url": "/static/song/3.mp3",
+        "artist": "森林",
+        "cover_url": "/static/song/3.png"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "夏日蝉鸣",
+    "description": "那个漫长的暑假，阳光穿透树叶，耳畔是永不疲倦的蝉鸣。",
+    "coverUrl": "/static/recommendList/litst5.png",
+    "tracks": [
+      {
+        "id": 105,
+        "name": "烈日盛夏",
+        "url": "/static/song/4.mp3",
+        "artist": "回忆",
+        "cover_url": "/static/song/4.png"
+      }
+    ]
+  }
+]

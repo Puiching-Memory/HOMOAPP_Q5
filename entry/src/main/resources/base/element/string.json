@@ -15,6 +15,10 @@
     {
       "name": "app_title",
       "value": "夜雨森林海"
+    },
+    {
+      "name": "permission_reason_background",
+      "value": "需要后台运行权限以保持音频播放"
     }
   ]
 }
