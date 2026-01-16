@@ -5,6 +5,7 @@ HarmonyOS 环境白噪音 APP，整合 ArkTS 前端与 Docker 化后端，实现
 - 前端：`entry` 模块加载 [entry/src/main/ets/pages/Index.ets](entry/src/main/ets/pages/Index.ets)，展示场景卡片、音轨控制、预设模式与专注计时器。
 - 后端：FastAPI 提供 `/api/v1/scenes`、`/api/v1/presets` 等接口，数据存储在 SQLite 并打包至 Docker 容器。
 - 交互：前端默认请求 `http://10.0.2.2:8080/api/v1`，返回的 `audioUrl` 指向公开白噪音样本，可驱动 ArkUI 播放机制。
+- API: 6.0.1 (21)
 
 ## 快速启动
 1. 参考 [backend/README.md](backend/README.md) 运行或构建 Docker 化后端，并确认 8080 端口可达。
