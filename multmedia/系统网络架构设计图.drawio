@@ -1,0 +1,157 @@
+<mxfile host="embed.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0" version="29.3.1">
+  <diagram id="PgI16F-IhRSfZ5gZKRHR" name="第 1 页">
+    <mxGraphModel dx="1268" dy="808" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;fontSize=24;fontStyle=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;" value="HOMOAPP_Q5 系统网络架构设计图" vertex="1">
+          <mxGeometry height="40" width="400" x="200" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="client-layer" parent="1" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;" value="客户端层 (HarmonyOS)" vertex="1">
+          <mxGeometry height="200" width="320" x="40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="harmonyos-app" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;" value="HarmonyOS 应用&#xa;(ArkTS)" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="http-client" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;" value="HTTP 客户端&#xa;(@ohos.net.http)" vertex="1">
+          <mxGeometry height="60" width="120" x="220" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="av-player" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;" value="AVPlayer&#xa;(音频播放)" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-components" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;" value="UI 组件&#xa;(ArkUI)" vertex="1">
+          <mxGeometry height="60" width="120" x="220" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="api-url" parent="1" style="text;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontSize=12;fontColor=#666666;" value="API 端点: http://10.0.2.2:8080/api/v1" vertex="1">
+          <mxGeometry height="20" width="280" x="60" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="network-layer" parent="1" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;" value="网络层" vertex="1">
+          <mxGeometry height="200" width="320" x="400" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="http-protocol" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;" value="HTTP 协议&#xa;(端口 8080)" vertex="1">
+          <mxGeometry height="60" width="120" x="420" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="cors" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;" value="CORS 跨域支持" vertex="1">
+          <mxGeometry height="60" width="120" x="560" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="cleartext" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;" value="明文传输支持&#xa;(开发环境)" vertex="1">
+          <mxGeometry height="60" width="280" x="420" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="server-layer" parent="1" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;" value="服务器层 (FastAPI)" vertex="1">
+          <mxGeometry height="320" width="320" x="760" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="fastapi" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;fontStyle=1;" value="FastAPI 应用&#xa;(Python 3.10+)" vertex="1">
+          <mxGeometry height="50" width="280" x="780" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="api-routes" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;" value="API 路由" vertex="1">
+          <mxGeometry height="120" width="280" x="780" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="route1" parent="1" style="text;align=left;verticalAlign=middle;fillColor=none;strokeColor=none;" value="• GET /api/v1/scenes" vertex="1">
+          <mxGeometry height="20" width="260" x="790" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="route2" parent="1" style="text;align=left;verticalAlign=middle;fillColor=none;strokeColor=none;" value="• GET /api/v1/presets" vertex="1">
+          <mxGeometry height="20" width="260" x="790" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="route3" parent="1" style="text;align=left;verticalAlign=middle;fillColor=none;strokeColor=none;" value="• GET /api/v1/audio" vertex="1">
+          <mxGeometry height="20" width="260" x="790" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="route4" parent="1" style="text;align=left;verticalAlign=middle;fillColor=none;strokeColor=none;" value="• GET /data/{file_path}" vertex="1">
+          <mxGeometry height="20" width="260" x="790" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="route5" parent="1" style="text;align=left;verticalAlign=middle;fillColor=none;strokeColor=none;" value="• GET /static/{path}" vertex="1">
+          <mxGeometry height="20" width="260" x="790" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="audio-processor" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;" value="音频处理模块&#xa;(librosa)" vertex="1">
+          <mxGeometry height="60" width="280" x="780" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="waveform" parent="1" style="text;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontSize=11;fontColor=#666666;" value="波形分析&#xa;(STFT/频谱分析)" vertex="1">
+          <mxGeometry height="20" width="260" x="790" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="data-layer" parent="1" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;" value="数据存储层" vertex="1">
+          <mxGeometry height="200" width="320" x="40" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="sqlite" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;" value="SQLite 数据库&#xa;(white_noise.db)" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="json-files" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;" value="JSON 数据文件" vertex="1">
+          <mxGeometry height="60" width="120" x="220" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="static-files" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;" value="静态资源文件" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="audio-files" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;" value="音频文件存储" vertex="1">
+          <mxGeometry height="60" width="120" x="220" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="json-list" parent="1" style="text;align=left;verticalAlign=top;fillColor=none;strokeColor=none;fontSize=10;fontColor=#666666;" value="banners.json&#xa;moments.json&#xa;recommendations.json&#xa;scenes.json" vertex="1">
+          <mxGeometry height="80" width="120" x="350" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="deploy-layer" parent="1" style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;" value="部署层" vertex="1">
+          <mxGeometry height="200" width="680" x="400" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="docker" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=middle;fontStyle=1;" value="Docker 容器&#xa;(可选部署)" vertex="1">
+          <mxGeometry height="60" width="200" x="420" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="volume-mount" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;" value="数据卷挂载&#xa;(持久化存储)" vertex="1">
+          <mxGeometry height="60" width="200" x="640" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="uvicorn" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;" value="Uvicorn ASGI 服务器&#xa;(host: 0.0.0.0, port: 8080)" vertex="1">
+          <mxGeometry height="60" width="210" x="860" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="env-config" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;" value="环境变量配置" vertex="1">
+          <mxGeometry height="70" width="640" x="420" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="env1" parent="1" style="text;align=left;verticalAlign=middle;fillColor=none;strokeColor=none;" value="• NOISE_BACKEND_PORT (默认: 8080)" vertex="1">
+          <mxGeometry height="20" width="300" x="430" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="env2" parent="1" style="text;align=left;verticalAlign=middle;fillColor=none;strokeColor=none;" value="• NOISE_DATA_DIR (默认: ./data)" vertex="1">
+          <mxGeometry height="20" width="300" x="430" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="env3" parent="1" style="text;align=left;verticalAlign=middle;fillColor=none;strokeColor=none;" value="• NOISE_LOCAL_IP (可选)" vertex="1">
+          <mxGeometry height="20" width="320" x="750" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" edge="1" parent="1" source="http-client" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=2;strokeColor=#666666;" target="http-protocol" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="400" y="350" as="sourcePoint" />
+            <mxPoint x="450" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge2" edge="1" parent="1" source="http-protocol" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.25;strokeWidth=2;strokeColor=#666666;" target="fastapi" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="500" y="400" as="sourcePoint" />
+            <mxPoint x="550" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge3" edge="1" parent="1" source="api-routes" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeWidth=2;strokeColor=#666666;" target="sqlite" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="700" y="500" as="sourcePoint" />
+            <mxPoint x="750" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4" edge="1" parent="1" source="api-routes" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;entryX=0.75;entryY=0;strokeWidth=2;strokeColor=#666666;" target="json-files" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="700" y="500" as="sourcePoint" />
+            <mxPoint x="750" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge5" edge="1" parent="1" source="api-routes" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;entryX=0.25;entryY=0;strokeWidth=2;strokeColor=#666666;" target="static-files" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="700" y="500" as="sourcePoint" />
+            <mxPoint x="750" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge6" edge="1" parent="1" source="audio-processor" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=1;entryX=0.75;entryY=0;strokeWidth=2;strokeColor=#666666;" target="audio-files" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="700" y="500" as="sourcePoint" />
+            <mxPoint x="750" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge7" edge="1" parent="1" source="fastapi" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;entryX=0.25;entryY=0;strokeWidth=2;strokeColor=#666666;" target="docker" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="700" y="500" as="sourcePoint" />
+            <mxPoint x="750" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
